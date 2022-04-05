@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
 	"go.opentelemetry.io/otel/sdk/metric/export/aggregation"
@@ -60,9 +61,8 @@ func initMeter() {
 	fmt.Println("Prometheus server running on :2222")
 }
 
-func getInventory(ctx *gin.Context) {
-	//meter := otel.Meter("inventory-service")
-	//metric.
+func getInventory(ctx *gin.Context, h syncfloat64.Counter) {
+	h.Add(ctx, 1)
 	ctx.JSON(200, gin.H{"inventory": inventory})
 }
 
@@ -74,6 +74,7 @@ func main() {
 	if err != nil {
 		log.Panicf("failed to initialize instrument: %v", err)
 	}
+
 	counter, err := meter.SyncFloat64().Counter("ex.com.three")
 	if err != nil {
 		log.Panicf("failed to initialize instrument: %v", err)
@@ -89,7 +90,12 @@ func main() {
 	histogram.Record(ctx, 12.0)
 	counter.Add(ctx, 13.0)
 
+	getPepe(histogram)
 	router := gin.Default()
-	router.GET("/inventory", getInventory)
-	router.Run("localhost:8080")
+	router.GET("/inventory", func(c *gin.Context) { getInventory(c, counter) })
+	_ = router.Run("localhost:8080")
+}
+
+func getPepe(h syncfloat64.Histogram) {
+
 }
