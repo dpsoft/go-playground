@@ -1,81 +1,95 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
+	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
+	"go.opentelemetry.io/otel/sdk/metric/export/aggregation"
+	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
+	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"net/http"
+
+	"log"
 )
 
-type Person interface {
-	Greet()
+type Product struct {
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+	Id    int     `json:"id"`
 }
 
-type person struct {
-	name string
-	age  int
+type Inventory struct {
+	Products []Product `json:"products"`
 }
 
-func (p person) Greet() {
-	fmt.Printf("Hi, my name is %s", p.name)
+var inventory = Inventory{
+	Products: []Product{
+		{Name: "Laptop", Price: 1000, Id: 1},
+		{Name: "Mobile", Price: 500, Id: 2},
+		{Name: "Tablet", Price: 700, Id: 3},
+	},
 }
 
-func NewPerson(name string, age int) Person {
-	return person{
-		name: name,
-		age:  age,
-	}
-}
+func initMeter() {
+	config := prometheus.Config{DefaultHistogramBoundaries: []float64{1, 2, 5, 10, 20, 50}}
+	c := controller.New(
+		processor.NewFactory(
+			selector.NewWithHistogramDistribution(histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries)),
+			aggregation.CumulativeTemporalitySelector(),
+			processor.WithMemory(true),
+		),
+	)
 
-// album represents data about a record album.
-type album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
-}
-
-// albums slice to seed record album data.
-var albums = []album{
-	{ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
-	{ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-	{ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
-}
-
-// getAlbums responds with the list of all albums as JSON.
-func getAlbums(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, albums)
-}
-
-// postAlbums adds an album from JSON received in the request body.
-func postAlbums(c *gin.Context) {
-	var newAlbum album
-
-	// Call BindJSON to bind the received JSON to
-	// newAlbum.
-	if err := c.BindJSON(&newAlbum); err != nil {
-		return
+	exporter, err := prometheus.New(config, c)
+	if err != nil {
+		log.Panicf("failed to initialize prometheus exporter %v", err)
 	}
 
-	// Add the new album to the slice.
-	albums = append(albums, newAlbum)
-	c.IndentedJSON(http.StatusCreated, newAlbum)
+	global.SetMeterProvider(exporter.MeterProvider())
+
+	http.HandleFunc("/", exporter.ServeHTTP)
+
+	go func() {
+		_ = http.ListenAndServe(":2222", nil)
+	}()
+
+	fmt.Println("Prometheus server running on :2222")
 }
 
-func getAlbumByID(c *gin.Context) {
-	id := c.Param("id")
-	for _, album := range albums {
-		if album.ID == id {
-			c.IndentedJSON(http.StatusOK, album)
-			return
-		}
-	}
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+func getInventory(ctx *gin.Context) {
+	//meter := otel.Meter("inventory-service")
+	//metric.
+	ctx.JSON(200, gin.H{"inventory": inventory})
 }
 
 func main() {
+	initMeter()
+	meter := global.MeterProvider().Meter(("inventory-service"))
+
+	histogram, err := meter.SyncFloat64().Histogram("ex.com.two")
+	if err != nil {
+		log.Panicf("failed to initialize instrument: %v", err)
+	}
+	counter, err := meter.SyncFloat64().Counter("ex.com.three")
+	if err != nil {
+		log.Panicf("failed to initialize instrument: %v", err)
+	}
+
+	ctx := context.Background()
+
+	//commonLabels := []attribute.KeyValue{lemonsKey.Int(10), attribute.String("A", "1"), attribute.String("B", "2"), attribute.String("C", "3")}
+	//notSoCommonLabels := []attribute.KeyValue{lemonsKey.Int(13)}
+	//histogram.Record(ctx, 12.0, commonLabels...)
+	//counter.Add(ctx, 13.0, commonLabels...)
+
+	histogram.Record(ctx, 12.0)
+	counter.Add(ctx, 13.0)
+
 	router := gin.Default()
-	router.GET("/albums", getAlbums)
-	router.GET("/albums/:id", getAlbumByID)
-	router.POST("/albums", postAlbums)
-	_ = router.Run("localhost:8080")
+	router.GET("/inventory", getInventory)
+	router.Run("localhost:8080")
 }
