@@ -1,9 +1,11 @@
 package main
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/router"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
@@ -12,9 +14,8 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric/export/aggregation"
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
-	"net/http"
-
 	"log"
+	"net/http"
 )
 
 type Product struct {
@@ -40,7 +41,9 @@ func initMeter() {
 	c := controller.New(
 		processor.NewFactory(
 			selector.NewWithHistogramDistribution(histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries)),
+			//aggregation.StatelessTemporalitySelector(),
 			aggregation.CumulativeTemporalitySelector(),
+			//aggregation.DeltaTemporalitySelector(),
 			processor.WithMemory(true),
 		),
 	)
@@ -66,36 +69,77 @@ func getInventory(ctx *gin.Context, h syncfloat64.Counter) {
 	ctx.JSON(200, gin.H{"inventory": inventory})
 }
 
-func main() {
-	initMeter()
-	meter := global.MeterProvider().Meter(("inventory-service"))
+var inventoryKey = attribute.Key("inventory-service-attribute")
 
-	histogram, err := meter.SyncFloat64().Histogram("ex.com.two")
-	if err != nil {
-		log.Panicf("failed to initialize instrument: %v", err)
+func calcRemainderAndMod(numerator, denominator int) (int, int, error) {
+	if denominator == 0 {
+		return 0, 0, errors.New("denomiator is 0")
 	}
-
-	counter, err := meter.SyncFloat64().Counter("ex.com.three")
-	if err != nil {
-		log.Panicf("failed to initialize instrument: %v", err)
-	}
-
-	ctx := context.Background()
-
-	//commonLabels := []attribute.KeyValue{lemonsKey.Int(10), attribute.String("A", "1"), attribute.String("B", "2"), attribute.String("C", "3")}
-	//notSoCommonLabels := []attribute.KeyValue{lemonsKey.Int(13)}
-	//histogram.Record(ctx, 12.0, commonLabels...)
-	//counter.Add(ctx, 13.0, commonLabels...)
-
-	histogram.Record(ctx, 12.0)
-	counter.Add(ctx, 13.0)
-
-	getPepe(histogram)
-	router := gin.Default()
-	router.GET("/inventory", func(c *gin.Context) { getInventory(c, counter) })
-	_ = router.Run("localhost:8080")
+	return numerator / denominator, numerator % denominator, nil
 }
 
-func getPepe(h syncfloat64.Histogram) {
+func main() {
+	//type T struct{ a, b, c int }
+	//var x = T{1, 2, 3}
+	//var y = T{4, 5, 6}
+	//var z = T{7, 8, 9}
+	//
+	//var v atomic.Value
+	//v.Store(x)
+	//fmt.Println(v)
+	//
+	//old := v.Swap(y)
+	//fmt.Println(v)
+	//fmt.Println(old.(T))
+	//
+	//swapped := v.CompareAndSwap(x, z)
+	//fmt.Println(swapped, v) // false {{4 5 6}}
+	//swapped = v.CompareAndSwap(y, z)
+	//fmt.Println(swapped, v) // true {{7 8 9}}
+	//
+	//filter := bloom.NewWithEstimates(1000000, 0.001)
+	//
+	//for i := 0; i < 1000000; i++ {
+	//	filter.AddString(fmt.Sprint("Love-", i))
+	//}
+	//
+	//fmt.Print(filter.K())
+	//if filter.TestString("Love-99") {
+	//	fmt.Println("Diego is in the filter")
+	//}
+	//remainder, mod, errr := calcRemainderAndMod(1, 0)
+	//
+	//if errr != nil {
+	//	fmt.Println(errr)
+	//	os.Exit(1)
+	//}
+	//fmt.Println(remainder, mod)
+	//
+	//initMeter()
+	//meter := global.MeterProvider().Meter("inventory-service")
+	//
+	//histogram, err := meter.SyncFloat64().Histogram("histogram")
+	//if err != nil {
+	//	log.Panicf("failed to initialize instrument: %v", err)
+	//}
+	//
+	//counter, err := meter.SyncFloat64().Counter("counter")
+	//if err != nil {
+	//	log.Panicf("failed to initialize instrument: %v", err)
+	//}
+	//
+	//ctx := context.Background()
+	//
+	//commonLabels := []attribute.KeyValue{inventoryKey.Int(10), attribute.String("A", "1"), attribute.String("B", "2"), attribute.String("C", "3")}
+	//notSoCommonLabels := []attribute.KeyValue{inventoryKey.Int(13)}
+	//
+	//histogram.Record(ctx, 12.0, commonLabels...)
+	//
+	//counter.Add(ctx, 13.0, commonLabels...)
+	//counter.Add(ctx, 1.0, notSoCommonLabels...)
 
+	r := gin.Default()
+	route := router.NewAdminRoute()
+	route.Register(r.Group("/admin"))
+	_ = r.Run("localhost:8080")
 }
