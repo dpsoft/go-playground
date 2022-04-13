@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
@@ -27,7 +28,7 @@ func initMeter() {
 			processor.WithMemory(true),
 		),
 	)
-
+	stdoutmetric.New(stdoutmetric.WithPrettyPrint())
 	exporter, err := prometheus.New(config, c)
 	if err != nil {
 		log.Panicf("failed to initialize prometheus exporter %v", err)
