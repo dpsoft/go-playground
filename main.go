@@ -11,7 +11,12 @@ func main() {
 	stdout.Example()
 
 	r := gin.Default()
+
 	route := router.NewAdminRoute()
 	route.Register(r.Group("/admin"))
+
+	metricRoute := router.NewMetricRoute()
+	metricRoute.Register(r.Group("/metrics"))
+
 	_ = r.Run("localhost:8080")
 }
