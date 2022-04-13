@@ -11,6 +11,7 @@ import (
 type AdminRoute interface {
 	Register(router *gin.RouterGroup)
 }
+
 type adminRoute struct {
 	regex *regexp.Regexp
 	bloom *bloom.BloomFilter
