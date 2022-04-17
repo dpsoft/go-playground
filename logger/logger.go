@@ -6,21 +6,21 @@ import (
 )
 
 type Logger interface {
-	Errorf(format string, args ...interface{})
-	Fatalf(format string, args ...interface{})
-	Fatal(args ...interface{})
-	Infof(format string, args ...interface{})
-	Info(args ...interface{})
-	Warnf(format string, args ...interface{})
-	Debugf(format string, args ...interface{})
-	Debug(args ...interface{})
+	//Errorf(format string, args ...any)
+	//Fatalf(format string, args ...any)
+	//Fatal(args ...any)
+	//Infof(format string, args ...any)
+	//Info(args ...any)
+	//Warnf(format string, args ...any)
+	Debugf(format string, args ...any)
+	Debug(args ...any)
 }
 
 type BuiltinLogger struct {
 	logger *log.Logger
 }
 
-func newBuiltinLogger(logger *log.Logger) *BuiltinLogger {
+func NewBuiltinLogger() *BuiltinLogger {
 	return &BuiltinLogger{logger: log.New(os.Stdout, "", 5)}
 }
 

@@ -2,12 +2,14 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/logger"
 	"github.com/go-playground/router"
 	"github.com/go-playground/settings"
 )
 
 type Server struct {
 	settings settings.Settings
+	logger   logger.Logger
 }
 
 func (s *Server) Run() {
@@ -25,8 +27,9 @@ func (s *Server) Run() {
 	_ = r.Run(host + ":" + port)
 }
 
-func New(settings settings.Settings) *Server {
+func New(settings settings.Settings, logger logger.Logger) *Server {
 	return &Server{
 		settings: settings,
+		logger:   logger,
 	}
 }
