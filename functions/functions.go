@@ -1,5 +1,10 @@
 package functions
 
+import (
+	"fmt"
+	"time"
+)
+
 func MapSlice[T any, M any](slice []T, f func(T) M) []M {
 	result := make([]M, len(slice))
 	for i, v := range slice {
@@ -24,4 +29,16 @@ func Reduce[T, M any](s []T, f func(M, T) M, initValue M) M {
 		acc = f(acc, v)
 	}
 	return acc
+}
+
+func Timed(f func()) {
+	start := time.Now()
+	defer func() { fmt.Printf("execution took %s\n", time.Since(start)) }()
+	f()
+}
+
+func TimedFunction[T any](f func() T) T {
+	start := time.Now()
+	defer func() { fmt.Printf("execution took %s\n", time.Since(start)) }()
+	return f()
 }
