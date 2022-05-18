@@ -6,11 +6,11 @@ require (
 	github.com/bits-and-blooms/bloom/v3 v3.2.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/rs/zerolog v1.26.1
-	go.opentelemetry.io/otel v1.6.1
-	go.opentelemetry.io/otel/exporters/prometheus v0.28.0
-	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v0.28.0
-	go.opentelemetry.io/otel/metric v0.28.0
-	go.opentelemetry.io/otel/sdk/metric v0.28.0
+	go.opentelemetry.io/otel v1.7.0
+	go.opentelemetry.io/otel/exporters/prometheus v0.30.0
+	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v0.30.0
+	go.opentelemetry.io/otel/metric v0.30.0
+	go.opentelemetry.io/otel/sdk/metric v0.30.0
 )
 
 require (
@@ -35,8 +35,8 @@ require (
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
-	go.opentelemetry.io/otel/sdk v1.6.0 // indirect
-	go.opentelemetry.io/otel/trace v1.6.1 // indirect
+	go.opentelemetry.io/otel/sdk v1.7.0 // indirect
+	go.opentelemetry.io/otel/trace v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect

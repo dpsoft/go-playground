@@ -1,15 +1,17 @@
 package main
 
 import (
-	log "github.com/go-playground/logger"
-	"github.com/go-playground/server"
-	"github.com/go-playground/settings"
+	"github.com/go-playground/stdout"
+	"github.com/go-playground/telemetry"
 )
 
 func main() {
-	cfg := settings.NewSettings()
-	logger := log.NewBuiltinLogger()
-	s := server.New(cfg, logger)
+	//cfg := settings.NewSettings()
+	//logger := log.NewBuiltinLogger()
+	//s := server.New(cfg, logger)
 
-	s.Run()
+	telemetry.Metrics().IncrementCounter()
+	stdout.Example()
+
+	//s.Run()
 }

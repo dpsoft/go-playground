@@ -64,6 +64,7 @@ func InstallExportPipeline(ctx context.Context) func() {
 	}
 
 	global.SetMeterProvider(pusher)
+
 	meter := global.MeterProvider().Meter(instrumentationName, metric.WithInstrumentationVersion(instrumentationVersion))
 
 	loopCounter, err = meter.SyncInt64().Counter("function.loops")

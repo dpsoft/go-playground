@@ -38,6 +38,7 @@ func (m metricRoute) ingest(ctx *gin.Context) {
 		return
 	}
 
+	//telemetry.Instance().IncrementCounter()
 	log.Println("creating new metric...")
 
 	ctx.JSON(200, metric)
@@ -52,7 +53,6 @@ func (m metricRoute) run() {
 }
 
 func (m metricRoute) reload() (int, error) {
-
 	var bloooom = bloom.NewWithEstimates(100, 0.001)
 	bloooom.AddString("peacha")
 
